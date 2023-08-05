@@ -42,7 +42,7 @@ var countMergeRequestsCmd = &cobra.Command{
         }
 
         // Send request to GitLab API
-        url := fmt.Sprintf("%s/merge_requests?scope=all&state=all&author_username=%s&created_after=%s&created_before=%s", gitlabAPIURL, username, start.Format(time.RFC3339), end.Format(time.RFC3339))
+        url := fmt.Sprintf("%s/merge_requests?scope=all&state=all&author_username=%s&created_after=%s&created_before=%s", "gitlabAPIURL", username, start.Format(time.RFC3339), end.Format(time.RFC3339))
         client := &http.Client{}
         req, err := http.NewRequest("GET", url, nil)
         if err != nil {

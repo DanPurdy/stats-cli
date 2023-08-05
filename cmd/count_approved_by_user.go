@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
+	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/xanzy/go-gitlab"
 )
 
 var countApprovedByUserCmd = &cobra.Command{
@@ -13,38 +15,65 @@ var countApprovedByUserCmd = &cobra.Command{
     Short: "Count the merge requests where a specified user has been an approver",
     Run: func(cmd *cobra.Command, args []string) {
         // Read token
-        token := os.Getenv("GITLAB_TOKEN")
+        token := os.Getenv("GITLAB_CLI_TOKEN")
         if token == "" {
-            fmt.Println("GITLAB_TOKEN environment variable is not set.")
+            fmt.Println("GITLAB_CLI_TOKEN environment variable is not set.")
             return
         }
 
-        // Prompt for username
+        git, err := gitlab.NewClient(token)
+        if err != nil {
+            log.Fatalf("Failed to create client: %v", err)
+        }
+
+        // Prompt for username and dates
+        // var username, startDate, endDate string
         var username string
-        fmt.Print("Enter GitLab username of the approver: ")
+        fmt.Print("Enter GitLab username: ")
         fmt.Scanln(&username)
+        // fmt.Print("Enter start date (YYYY-MM-DD): ")
+        // fmt.Scanln(&startDate)
+        // fmt.Print("Enter end date (YYYY-MM-DD): ")
+        // fmt.Scanln(&endDate)
 
-        // Send request to GitLab API
-        url := fmt.Sprintf("%s/merge_requests?scope=all&state=merged&approver_usernames=%s", gitlabAPIURL, username)
-        client := &http.Client{}
-        req, err := http.NewRequest("GET", url, nil)
+
+        userOpt:= gitlab.SearchOptions{ListOptions: gitlab.ListOptions{PerPage: 1}};
+
+        users, _, err := git.Search.Users(username, &userOpt);
         if err != nil {
-            fmt.Printf("Error creating request: %v\n", err)
+            log.Fatalf("Failed to get user: %v", err)
+        }
+    
+
+        // Convert dates to time.Time
+        start := time.Now().Add(-time.Hour * 720);
+        if err != nil {
+            fmt.Println("Error parsing start date:", err)
+            return
+        }
+        end := time.Now()
+        if err != nil {
+            fmt.Println("Error parsing end date:", err)
             return
         }
 
-        // Set the authorization header
-        req.Header.Set("Authorization", "Bearer "+token)
+        approvers:= []int{users[0].ID}
+        
 
-        resp, err := client.Do(req)
-        if err != nil {
-            fmt.Printf("Error making request: %v\n", err)
-            return
+        opt:= gitlab.ListMergeRequestsOptions{
+            ListOptions: gitlab.ListOptions{PerPage: 1},
+            ApprovedByIDs: gitlab.ApproverIDs(approvers),
+            CreatedAfter: gitlab.Time(start), 
+            CreatedBefore: gitlab.Time(end),
+            Scope: gitlab.String("all"),
         }
-        defer resp.Body.Close()
 
-        // Get the X-Total header
-        xTotal := resp.Header.Get("X-Total")
+        _, resp2, err := git.MergeRequests.ListMergeRequests(&opt)
+        if err != nil {
+            log.Fatalf("Failed to list merge requests: %v", err)
+        }
+
+        xTotal:= resp2.Header.Get("X-Total");
 
         // Output the number of merge requests
         fmt.Printf("Number of merge requests approved by %s: %s\n", username, xTotal)
