@@ -46,12 +46,12 @@ var countApprovedByUserCmd = &cobra.Command{
     
 
         // Convert dates to time.Time
-        start := time.Now().Add(-time.Hour * 720);
+        start := time.Date(2023, 6, 14, 0, 0, 0, 0, time.UTC)
         if err != nil {
             fmt.Println("Error parsing start date:", err)
             return
         }
-        end := time.Now()
+        end := time.Date(2023,9,15,23,59,59,999, time.UTC)
         if err != nil {
             fmt.Println("Error parsing end date:", err)
             return
