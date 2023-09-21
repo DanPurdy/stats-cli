@@ -27,14 +27,13 @@ var countApprovedByUserCmd = &cobra.Command{
         }
 
         // Prompt for username and dates
-        // var username, startDate, endDate string
-        var username string
+        var username, startDate, endDate string
         fmt.Print("Enter GitLab username: ")
         fmt.Scanln(&username)
-        // fmt.Print("Enter start date (YYYY-MM-DD): ")
-        // fmt.Scanln(&startDate)
-        // fmt.Print("Enter end date (YYYY-MM-DD): ")
-        // fmt.Scanln(&endDate)
+        fmt.Print("Enter start date (YYYY-MM-DD): ")
+        fmt.Scanln(&startDate)
+        fmt.Print("Enter end date (YYYY-MM-DD): ")
+        fmt.Scanln(&endDate)
 
 
         userOpt:= gitlab.SearchOptions{ListOptions: gitlab.ListOptions{PerPage: 1}};
@@ -46,12 +45,14 @@ var countApprovedByUserCmd = &cobra.Command{
     
 
         // Convert dates to time.Time
-        start := time.Date(2023, 6, 14, 0, 0, 0, 0, time.UTC)
+        startParsed, err := time.Parse("2006-01-02", startDate)
+        start := time.Date(startParsed.Year(), startParsed.Month(), startParsed.Day(), 0, 0, 0, 0, time.UTC)
         if err != nil {
             fmt.Println("Error parsing start date:", err)
             return
         }
-        end := time.Date(2023,9,15,23,59,59,999, time.UTC)
+        endParsed, err := time.Parse("2006-01-02", endDate)
+        end := time.Date(endParsed.Year(), endParsed.Month(), endParsed.Day(), 23, 59, 59, 999, time.UTC)
         if err != nil {
             fmt.Println("Error parsing end date:", err)
             return
