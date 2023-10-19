@@ -8,17 +8,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/xanzy/go-gitlab"
-	bolt "go.etcd.io/bbolt"
 )
 
 var countMergeRequestsCmd = &cobra.Command{
     Use:   "count-merge-requests",
     Short: "Count the merge requests created by a user between two dates",
     Run: func(cmd *cobra.Command, args []string) {
-        db, err := bolt.Open("dev-stats.db", 0600, nil);
-        if err != nil {
-            log.Fatal(err)
-        }
         // Read token
         token := os.Getenv("GITLAB_CLI_TOKEN")
         if token == "" {
@@ -26,7 +21,7 @@ var countMergeRequestsCmd = &cobra.Command{
             return
         }
 
-        git, err := gitlab.NewClient(token)
+        client, err := gitlab.NewClient(token)
         if err != nil {
             log.Fatalf("Failed to create client: %v", err)
         }
@@ -42,7 +37,7 @@ var countMergeRequestsCmd = &cobra.Command{
 
         userOpt:= gitlab.SearchOptions{ListOptions: gitlab.ListOptions{PerPage: 1}};
 
-        users, _, err := git.Search.Users(username, &userOpt);
+        users, _, err := client.Search.Users(username, &userOpt);
         if err != nil {
             log.Fatalf("Failed to get user: %v", err)
         }
@@ -69,7 +64,7 @@ var countMergeRequestsCmd = &cobra.Command{
             Scope: gitlab.String("all"),
         }
 
-        _, resp2, err := git.MergeRequests.ListMergeRequests(&opt)
+        _, resp2, err := client.MergeRequests.ListMergeRequests(&opt)
         if err != nil {
             log.Fatalf("Failed to list merge requests: %v", err)
         }
@@ -78,11 +73,6 @@ var countMergeRequestsCmd = &cobra.Command{
 
         // Output the number of merge requests
         fmt.Printf("Number of merge requests created by %s between %s and %s: %s\n", username, start, end, xTotal)
-        err := db.Update(func(tx *bolt.Tx) error {
-            tx.wr
-            return nil
-        })
-        defer db.Close()
     },
 }
 

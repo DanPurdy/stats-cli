@@ -21,7 +21,7 @@ var countApprovedByUserCmd = &cobra.Command{
             return
         }
 
-        git, err := gitlab.NewClient(token)
+        client, err := gitlab.NewClient(token)
         if err != nil {
             log.Fatalf("Failed to create client: %v", err)
         }
@@ -38,7 +38,7 @@ var countApprovedByUserCmd = &cobra.Command{
 
         userOpt:= gitlab.SearchOptions{ListOptions: gitlab.ListOptions{PerPage: 1}};
 
-        users, _, err := git.Search.Users(username, &userOpt);
+        users, _, err := client.Search.Users(username, &userOpt);
         if err != nil {
             log.Fatalf("Failed to get user: %v", err)
         }
@@ -69,7 +69,7 @@ var countApprovedByUserCmd = &cobra.Command{
             Scope: gitlab.String("all"),
         }
 
-        _, resp2, err := git.MergeRequests.ListMergeRequests(&opt)
+        _, resp2, err := client.MergeRequests.ListMergeRequests(&opt)
         if err != nil {
             log.Fatalf("Failed to list merge requests: %v", err)
         }
